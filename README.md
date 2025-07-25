@@ -165,6 +165,28 @@ docker run --network host --add-host host.docker.internal:host-gateway -i privat
        valid_lft forever preferred_lft forever
 ```
 
+`ip a`コマンドではうまくいかず。
+
+ISUCON用のDocker Networkを確認し、
+
+```
+docker network ls | grep private
+220f2f07dabf   private-isu_my_network             bridge    local
+```
+
+IPアドレスを取得。
+
+```
+docker network inspect private-isu_my_network | grep Subnet
+                    "Subnet": "172.20.0.0/16",
+```
+
+IPアドレスをホストに指定して、ベンチマーク実行。
+
+```
+docker run --network host -i private-isu-benchmarker /bin/benchmarker -t http://172.20.0.1 -u /opt/userdata
+```
+
 #### Vagrant
 
 ローカルマシンにAnsibleをインストールし、`vagrant up`を実行すると、プロビジョニングが自動的に行われます。
