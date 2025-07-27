@@ -244,3 +244,12 @@ https://gist.github.com/tohutohu/024551682a9004da286b0abd6366fa55 を参照
 
 * Rust実装 https://github.com/Romira915/private-isu-rust
 * Scala実装 https://github.com/catatsuy/private-isu/pull/140
+
+## 追記
+
+### ログのローテート
+ベンチマーク開始前にログをローテートしておく
+
+```
+./rotate.sh
+```
