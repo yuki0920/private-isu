@@ -18,7 +18,7 @@ export default function() {
   const doc = parseHTML(res.body);
   const token = doc.find("input[name=csrf_token]").attr("value");
 
-  http.post(url("/comment"), {
+  http.post(url("/"), {
     file: http.file(testImage, "testimage.jpg", "image/jpeg"),
     body: "Posted by k6",
     csrf_token: token,
