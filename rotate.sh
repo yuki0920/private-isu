@@ -2,6 +2,7 @@
 
 mv webapp/logs/nginx/access.log webapp/logs/nginx/access.log.`date +%Y%m%d%H%M%S`
 mv webapp/logs/nginx/error.log webapp/logs/nginx/error.log.`date +%Y%m%d%H%M%S`
+mv webapp/logs/mysql/mysql-slow.log webapp/logs/mysql/mysql-slow.log.`date +%Y%m%d%H%M%S`
 
 cd webapp
 docker compose down
