@@ -177,14 +177,21 @@ docker network ls | grep private
 IPアドレスを取得。
 
 ```
-docker network inspect private-isu_my_network | grep Subnet
-                    "Subnet": "172.20.0.0/16",
+docker network inspect private-isu_my_network | grep Gateway
+                    "Gateway": "172.20.0.1/16",
 ```
 
 IPアドレスをホストに指定して、ベンチマーク実行。
 
 ```
 docker run --network host -i private-isu-benchmarker /bin/benchmarker -t http://172.20.0.1 -u /opt/userdata
+{"pass":true,"score":0,"success":142,"fail":65,"messages":["リクエストがタイムアウトしました (GET /)","リクエストがタイムアウトしました (GET /@adela)","リクエストがタイムアウトしました (GET /@alicia)","リクエストがタイムアウトしました (GET /@bettie)","リクエストがタイムアウトしました (GET /@elaine)","リクエストがタイムアウトしました (GET /@elva)","リクエストがタイムアウトしました (GET /@evangelina)","リクエストがタイムアウトしました (GET /@guadalupe)","リクエストがタイムアウトしました (GET /@hattie)","リクエストがタイムアウトしました (GET /@madeleine)","リクエストがタイムアウトしました (GET /@nita)","リクエストがタイムアウトしました (GET /@sherry)","リクエストがタイムアウトしました (POST /login)","リクエストがタイムアウトしました (POST /register)"]}
+```
+
+`初期化リクエストに失敗しました`と表示される際は、以下のIPアドレスを再度確認する。
+
+```
+{"pass":false,"score":0,"success":0,"fail":0,"messages":["初期化リクエストに失敗しました"]}
 ```
 
 #### Vagrant
