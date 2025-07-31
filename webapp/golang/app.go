@@ -2,6 +2,7 @@ package main
 
 import (
 	crand "crypto/rand"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -65,7 +66,7 @@ type Comment struct {
 	UserID    int       `db:"user_id"`
 	Comment   string    `db:"comment"`
 	CreatedAt time.Time `db:"created_at"`
-	User      User
+	User      User      `db:""`
 }
 
 func init() {
@@ -178,49 +179,59 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 	var posts []Post
 
 	for _, p := range results {
-		key := fmt.Sprintf("comments.%d", p.ID)
-		val, err := mc.Get(key)
+		countKey := fmt.Sprintf("comments.%d.count", p.ID)
+		val, err := mc.Get(countKey)
 		if err != nil && err != memcache.ErrCacheMiss {
 			return nil, err
 		}
-		if err == memcache.ErrCacheMiss {
+		if err != memcache.ErrCacheMiss {
+			p.CommentCount, err = strconv.Atoi(string(val.Value))
+		} else {
 			err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
 			if err != nil {
 				return nil, err
 			}
 
 			err = mc.Set(&memcache.Item{
-				Key:        key,
+				Key:        countKey,
 				Value:      []byte(strconv.Itoa(p.CommentCount)),
 				Expiration: 10,
 			})
 			if err != nil {
 				return nil, err
 			}
-		} else {
-			p.CommentCount, err = strconv.Atoi(string(val.Value))
 		}
 
-		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
-		if !allComments {
-			query += " LIMIT 3"
-		}
 		var comments []Comment
-		err = db.Select(&comments, query, p.ID)
-		if err != nil {
+		commentKey := fmt.Sprintf("comments.%d.%t", p.ID, allComments)
+		val, err = mc.Get(commentKey)
+		if err != nil && err != memcache.ErrCacheMiss {
 			return nil, err
 		}
-
-		for i := range comments {
-			err := db.Get(&comments[i].User, "SELECT * FROM `users` WHERE `id` = ?", comments[i].UserID)
+		if err != memcache.ErrCacheMiss {
+			err = json.Unmarshal(val.Value, &comments)
 			if err != nil {
 				return nil, err
 			}
-		}
+		} else {
+			query := "SELECT c.comment, c.created_at, u.account_name FROM `comments` AS c JOIN `users` AS u ON c.user_id = u.id WHERE c.post_id = ? ORDER BY c.created_at DESC"
+			if !allComments {
+				query += " LIMIT 3"
+			}
+			err = db.Select(&comments, query, p.ID)
+			if err != nil {
+				return nil, err
+			}
 
-		// reverse
-		for i, j := 0, len(comments)-1; i < j; i, j = i+1, j-1 {
-			comments[i], comments[j] = comments[j], comments[i]
+			commentData, err := json.Marshal(comments)
+			if err != nil {
+				return nil, err
+			}
+			mc.Set(&memcache.Item{
+				Key:        commentKey,
+				Value:      commentData,
+				Expiration: 10,
+			})
 		}
 
 		p.Comments = comments
@@ -881,12 +892,6 @@ func main() {
 	}
 	defer db.Close()
 
-	root, err := os.OpenRoot("../public")
-	if err != nil {
-		log.Fatalf("failed to open root: %v", err)
-	}
-	defer root.Close()
-
 	r := chi.NewRouter()
 
 	r.Get("/initialize", getInitialize)
@@ -905,7 +910,7 @@ func main() {
 	r.Post("/admin/banned", postAdminBanned)
 	r.Get(`/@{accountName:[a-zA-Z]+}`, getAccountName)
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-		http.FileServerFS(root.FS()).ServeHTTP(w, r)
+		http.FileServer(http.Dir("../public")).ServeHTTP(w, r)
 	})
 
 	log.Fatal(http.ListenAndServe(":8080", r))
