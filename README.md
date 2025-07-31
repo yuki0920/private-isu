@@ -262,3 +262,16 @@ https://gist.github.com/tohutohu/024551682a9004da286b0abd6366fa55 を参照
 ```
 ./rotate.sh
 ```
+
+### 各種計測
+
+```
+# ベンチマーカー実行
+./benchmark.sh
+
+# スロークエリ解析
+pt-query-digest webapp/logs/mysql/mysql-slow.log
+
+# アクセスログ解析
+./alp.sh
+```
