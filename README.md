@@ -165,6 +165,8 @@ docker run --network host --add-host host.docker.internal:host-gateway -i privat
        valid_lft forever preferred_lft forever
 ```
 
+以下、追記
+
 `ip a`コマンドではうまくいかず。
 
 ISUCON用のDocker Networkを確認し、
