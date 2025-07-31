@@ -6,5 +6,5 @@ mv webapp/logs/mysql/mysql-slow.log webapp/logs/mysql/mysql-slow.log.`date +%Y%m
 
 cd webapp
 docker compose down
-docker compose up
+docker compose up --build
 popd
