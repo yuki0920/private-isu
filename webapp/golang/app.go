@@ -174,13 +174,29 @@ func getFlash(w http.ResponseWriter, r *http.Request, key string) string {
 func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, error) {
 	var posts []Post
 
+	countKeys := make([]string, len(results))
+	commentKeys := make([]string, len(results))
+	for _, v := range results {
+		countKey := fmt.Sprintf("comments.%d.count", v.ID)
+		countKeys = append(countKeys, countKey)
+
+		commentKey := fmt.Sprintf("comments.%d.%t", v.ID, allComments)
+		commentKeys = append(commentKeys, commentKey)
+	}
+	cachedCounts, err := mc.GetMulti(countKeys)
+	if err != nil && err != memcache.ErrCacheMiss {
+		return nil, err
+	}
+
+	cachedComments, err := mc.GetMulti(commentKeys)
+	if err != nil && err != memcache.ErrCacheMiss {
+		return nil, err
+	}
+
 	for _, p := range results {
 		countKey := fmt.Sprintf("comments.%d.count", p.ID)
-		val, err := mc.Get(countKey)
-		if err != nil && err != memcache.ErrCacheMiss {
-			return nil, err
-		}
-		if err != memcache.ErrCacheMiss {
+		val, ok := cachedCounts[countKey]
+		if ok {
 			p.CommentCount, err = strconv.Atoi(string(val.Value))
 		} else {
 			err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
@@ -200,11 +216,8 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 
 		var comments []Comment
 		commentKey := fmt.Sprintf("comments.%d.%t", p.ID, allComments)
-		val, err = mc.Get(commentKey)
-		if err != nil && err != memcache.ErrCacheMiss {
-			return nil, err
-		}
-		if err != memcache.ErrCacheMiss {
+		val, ok = cachedComments[commentKey]
+		if ok {
 			err = json.Unmarshal(val.Value, &comments)
 			if err != nil {
 				return nil, err
