@@ -415,9 +415,8 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 
 	results := []Post{}
 
-	// TODO: fixme
 	query := `SELECT p.id, p.user_id, p.body, p.created_at, p.mime, u.account_name
-	FROM posts AS p JOIN users AS u ON p.user_id = u.id
+	FROM posts AS p STRAIGHT_JOIN users AS u ON p.user_id = u.id
 	WHERE u.del_flg = 0
 	ORDER BY created_at DESC
 	LIMIT 20`
@@ -467,7 +466,7 @@ func getAccountName(w http.ResponseWriter, r *http.Request) {
 
 	results := []Post{}
 	query := `SELECT p.id, p.user_id, p.body, p.created_at, p.mime, u.account_name
-	FROM posts AS p JOIN users AS u ON p.user_id = u.id
+	FROM posts AS p STRAIGHT_JOIN users AS u ON p.user_id = u.id
 	WHERE u.del_flg = 0
 	AND u.id = ?
 	ORDER BY created_at DESC
@@ -561,7 +560,7 @@ func getPosts(w http.ResponseWriter, r *http.Request) {
 
 	results := []Post{}
 	query := `SELECT p.id, p.user_id, p.body, p.created_at, p.mime, u.account_name
-	FROM posts AS p JOIN users AS u ON p.user_id = u.id
+	FROM posts AS p STRAIGHT_JOIN users AS u ON p.user_id = u.id
 	WHERE u.del_flg = 0
 	AND p.created_at <= ?
 	ORDER BY created_at DESC
@@ -603,7 +602,7 @@ func getPostsID(w http.ResponseWriter, r *http.Request) {
 
 	results := []Post{}
 	query := `SELECT p.id, p.user_id, p.body, p.created_at, p.mime, u.account_name
-	FROM posts AS p JOIN users AS u ON p.user_id = u.id
+	FROM posts AS p STRAIGHT_JOIN users AS u ON p.user_id = u.id
 	WHERE u.del_flg = 0
 	AND p.id = ?
 	ORDER BY created_at DESC
